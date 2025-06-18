@@ -1,0 +1,249 @@
+---
+title: "World Bank Indicators – Assignment 1"
+author: "Sabari Karthik S S"
+format: beamer-pdf
+institute: "UCD – STAT40830"
+date: "`r Sys.Date()`"
+engine: knitr
+execute:
+  echo: true
+  warning: false
+  message: false
+fontsize: 10pt
+---
+
+# Slide 1 – Load & Merge Datasets
+
+We load and merge three country datasets using `data.table`.
+
+```{r, echo=FALSE}
+library(data.table)
+library(ggplot2)
+fra = fread("indicators_fra.csv")
+ind = fread("indicators_ind.csv")
+irl = fread("indicators_irl.csv")
+dataList = list(France = fra, India = ind, Ireland = irl)
+allData = rbindlist(dataList, idcol = "Country")
+allData[, Year := as.integer(Year)]
+allData[, Value := as.numeric(Value)]
+allData = allData[!is.na(Year) & !is.na(Value)]
+```
+
+---
+
+# Slide 2 – Data Overview
+
+We summarize structure, missing values, and value ranges.
+
+```{r}
+cat("Rows:", nrow(allData), "Cols:", ncol(allData))
+colSums(is.na(allData))
+summary(allData)
+str(allData)
+```
+
+---
+
+# Slide 3 – Value Distribution
+
+We visualize distribution of indicator values using histogram.
+
+```{r}
+hist(log1p(allData$Value), breaks = 50,
+     main = "Histogram of log(1 + Value)",
+     xlab = "log1p(Value)")
+```
+
+---
+
+# Slide 4 – Most Frequent Indicators
+
+We identify the top 10 most frequently reported indicators.
+
+```{r}
+allData[, .N, by = `Indicator Name`][order(-N)][1:10] |>
+  ggplot(aes(x = reorder(`Indicator Name`, N), y = N)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Top 10 Most Common Indicators", x = "Indicator Name", y = "Count") +
+  theme_minimal()
+```
+
+---
+
+# Slide 5 – GDP per Capita
+
+We compare GDP per capita trends for the three countries.
+
+```{r}
+gdp = allData[`Indicator Name` == "GDP per capita (current US$)"]
+ggplot(gdp, aes(Year, Value, color = Country)) +
+  geom_line(size = 0.7) +
+  labs(title = "GDP per capita (USD)", y = "USD") +
+  theme(plot.margin = margin(10, 10, 10, 10))
+```
+
+Ireland's GDP surged after 2000. France is steady. India is far lower.
+
+---
+
+# Slide 6 – Population Growth
+
+We examine population growth trends across countries.
+
+```{r}
+pop = allData[`Indicator Name` == "Population growth (annual %)"]
+ggplot(pop, aes(Year, Value, color = Country)) +
+  geom_line(size = 0.7) +
+  labs(title = "Population Growth Rate", y = "% growth") +
+  theme(plot.margin = margin(10, 10, 10, 10))
+```
+
+India’s growth declines slowly. France is stable. Ireland fluctuates.
+
+---
+
+# Slide 7 – Education Spend
+
+We track education spending as % of GDP for each country.
+
+```{r}
+edu = allData[`Indicator Name` == "Government expenditure on education, total (% of GDP)"]
+ggplot(edu, aes(Year, Value, color = Country)) +
+  geom_line(size = 0.7) +
+  labs(title = "Education Spend (% GDP)", y = "% of GDP") +
+  theme(plot.margin = margin(10, 10, 10, 10))
+```
+
+France is high and stable. Ireland is more erratic. India is lower but improving.
+
+---
+
+# Slide 8 – Health Spending
+
+We analyze health expenditure trends over time.
+
+```{r}
+health = allData[`Indicator Name` == "Current health expenditure (% of GDP)"]
+ggplot(health, aes(Year, Value, color = Country)) +
+  geom_line(size = 0.7) +
+  labs(title = "Health Spending (% GDP)", y = "% of GDP") +
+  theme(plot.margin = margin(10, 10, 10, 10))
+```
+
+France leads in health spending. Ireland peaks then dips. India remains low.
+
+---
+
+# Slide 9 – Energy Use
+
+We compare energy use per capita between countries.
+
+```{r}
+energy = allData[`Indicator Name` == "Energy use (kg of oil equivalent per capita)"]
+ggplot(energy, aes(Year, Value, color = Country)) +
+  geom_line(size = 0.7) +
+  labs(title = "Energy Use per Capita", y = "kg of oil equivalent") +
+  theme(plot.margin = margin(10, 10, 10, 10))
+```
+
+France and Ireland use more energy per person. India is steadily increasing.
+
+---
+
+# Slide 10 – CO2 Emissions
+
+We analyze CO₂ emissions from the power sector.
+
+```{r}
+co2 = allData[`Indicator Name` == "Carbon dioxide (CO2) emissions from Power Industry (Energy) (Mt CO2e)"]
+ggplot(co2, aes(Year, Value, color = Country)) +
+  geom_line(size = 0.7) +
+  labs(title = "CO2 Emissions – Power Industry (Mt CO2e)", y = "Mt CO2e") +
+  theme(plot.margin = margin(10, 10, 10, 10))
+```
+
+India’s CO₂ emissions from power have grown massively since 1980. France and Ireland remain flat with much lower levels. Gap continues to widen due to India’s rising energy demand.
+
+---
+
+# Slide 11 – Indicator Averages
+
+We summarize average values for key indicators using `keyby`.
+
+```{r, fig.width=6, fig.height=3}
+allData[`Indicator Name` %in% c("GDP per capita (current US$)",
+                               "Population growth (annual %)",
+                               "Government expenditure on education, total (% of GDP)",
+                               "Current health expenditure (% of GDP)",
+                               "Carbon dioxide (CO2) emissions from Power Industry (Energy) (Mt CO2e)") ,
+        .(avgValue = mean(Value, na.rm = TRUE)),
+        keyby = .(Country, `Indicator Name`)]
+```
+
+---
+
+# Slide 12 – Summary: Country Comparison
+
+We summarize key findings comparing countries overall.
+
+- Ireland leads in GDP per capita, but fluctuates in social spending
+- France is consistent across indicators and invests the most in public services
+- India has rapid population growth and rising emissions, but low per-capita spending
+
+---
+
+# Slide 13 – Summary: Indicator Perspective
+
+We summarize findings based on individual indicator categories.
+
+- GDP: Ireland highest, India lowest
+- Education & Health: France invests the most
+- Population: India growing fastest
+- Energy Use: France and Ireland higher per capita
+- CO₂ Emissions: India’s emissions rising fast from power sector
+
+---
+
+# Slide 14 – Literate Programming
+
+We explain our coding and documentation approach.
+
+- Quarto-based `.qmd` for reproducibility
+- Combined code + interpretation
+- Easy to update or extend
+
+---
+
+# Slide 15 – Version Control & Styling
+
+We explain tools used to manage the project and format slides.
+
+- Tracked with Git + GitHub
+- Font size 10pt, figure widths tuned
+- Output formatted clearly
+
+---
+
+# Slide 16 – Dependency Management
+
+We manage packages and versions using `renv`.
+
+```{r eval=FALSE}
+# renv::init()
+# renv::snapshot()
+```
+
+---
+
+# Slide 17 – Final Thoughts
+
+We reflect on the workflow and potential extensions.
+
+- Used `data.table` throughout for speed
+- Clean plots using `ggplot2`
+- Covered 3 countries and 5 key indicators
+
+---
+
+# Slide 18 – Thank You!

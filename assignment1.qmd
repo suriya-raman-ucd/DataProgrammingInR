@@ -1,0 +1,188 @@
+---
+title: "STAT40830 - Assignment 1"
+author: "Sabari Karthik S S"
+format: beamer-pdf
+engine: knitr
+execute:
+  echo: true
+  warning: false
+  message: false
+fontsize: 10pt
+---
+
+
+
+```{r}
+#Loading the libraries
+library(data.table)
+library(ggplot2)
+```
+# Slide 1 – Loading the Datasets
+
+```{r}
+
+fra = fread("indicators_fra.csv")
+ind = fread("indicators_ind.csv")
+irl = fread("indicators_irl.csv")
+
+dataList = list(France = fra, India = ind, Ireland = irl)
+```
+
+For this assignment, I have taken three countries, India( where I am from),
+Ireland(where I currently reside) and France (I like Paris)
+
+---
+
+# Slide 2 – Merge and Assign Classes
+
+```{r}
+allData = rbindlist(dataList, idcol = "Country")
+allData[, Year := as.integer(Year)]
+```
+Merges all 3 datasets into allData
+
+Converts Year to numeric
+
+---
+
+# Slide 3 – Exploratory Data Analysis
+
+```{r}
+# Check dimensions and missing values
+cat("Rows:", nrow(allData), "Cols:", ncol(allData), "
+")
+colSums(is.na(allData))
+
+summary(allData)
+str(allData)
+```
+A basic check of the dataset shows it's well structured:
+
+236,000+ rows across 7 columns covering 3 countries
+
+Only 3 missing values in Year and Value
+
+Year variable ranges from 1960 to 2024
+
+All variable types appear correctly assigned (e.g., character vs numeric)
+
+No major issues detected, so we can safely move into filtering and analysis.
+---
+
+# Slide 4 – Filter: GDP per Capita
+
+```{r}
+gdp = allData[`Indicator Name` == "GDP per capita (current US$)"]
+```
+
+---
+
+# Slide 5 – Plot: GDP per Capita
+
+```{r, fig.width=7, fig.height=4}
+library(ggplot2)
+ggplot(gdp, aes(Year, `Indicator Value`, color = Country)) +
+  geom_line(size = 0.7) +
+  labs(title = "GDP per capita (USD)", y = "USD")
+```
+
+---
+
+# Slide 6 – Filter: Population Growth
+
+```{r}
+pop = allData[`Indicator Name` == "Population growth (annual %)"]
+```
+
+---
+
+# Slide 7 – Plot: Population Growth
+
+```{r, fig.width=7, fig.height=4}
+ggplot(pop, aes(Year, `Indicator Value`, color = Country)) +
+  geom_line(size = 0.7) +
+  labs(title = "Population Growth Rate", y = "% growth")
+```
+
+---
+
+# Slide 8 – Filter: Education Spend
+
+```{r}
+edu = allData[`Indicator Name` == "Government expenditure on education, total (% of GDP)"]
+```
+
+---
+
+# Slide 9 – Plot: Education Spend
+
+```{r, fig.width=7, fig.height=4}
+ggplot(edu, aes(Year, `Indicator Value`, color = Country)) +
+  geom_line(size = 0.7) +
+  labs(title = "Education Spend (% GDP)", y = "% of GDP")
+```
+
+---
+
+# Slide 10 – Grouped Summary with keyby
+
+```{r, fontsize=\scriptsize}
+allData[`Indicator Name` %in% c("GDP per capita (current US$)", "Population growth (annual %)"),
+        .(avgValue = mean(`Indicator Value`, na.rm = TRUE)),
+        keyby = .(Country, `Indicator Name`)]
+```
+
+---
+
+# Slide 11 – Summary of Observations
+
+- Ireland shows highest GDP per capita
+- France spends more on education (% of GDP)
+- India has the highest population growth rate
+
+---
+
+# Slide 12 – Quarto & Literate Programming
+
+- Report is written entirely in `.qmd`
+- All results regenerate with updated data
+- Code and narrative co-exist cleanly for clarity
+
+---
+
+# Slide 13 – Version Control Setup
+
+- Project tracked using Git from the start
+- Commits mark each step: load, wrangle, plot
+- GitHub repo maintained (link available on request)
+
+---
+
+# Slide 14 – Slide Aesthetics & Formatting
+
+- Font size set to 10pt via `.tex` customization
+- Used `fig.width`, `fig.height` to scale graphs
+- Compact table output using `fontsize=\scriptsize`
+
+---
+
+# Slide 15 – Dependency Management (renv)
+
+```{r eval=FALSE}
+# renv::init()
+# renv::snapshot()
+```
+
+---
+
+# Slide 16 – Final Thoughts
+
+- `data.table` enabled fast, readable code
+- Workflow is reproducible and easy to extend
+- Framework generalizes well to other indicators/countries
+
+---
+
+# Slide 17 – Thank You!
+
+Any questions?
